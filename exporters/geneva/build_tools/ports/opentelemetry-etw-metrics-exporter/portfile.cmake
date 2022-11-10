@@ -11,7 +11,7 @@ vcpkg_from_github(
 )
 
 vcpkg_cmake_configure(
-    SOURCE_PATH "${SOURCE_PATH}/exporters/geneva/build_tools/"
+    SOURCE_PATH "${SOURCE_PATH}/exporters/geneva/"
     OPTIONS
         -DBUILD_TESTING=OFF
         -DBUILD_EXAMPLE=OFF
