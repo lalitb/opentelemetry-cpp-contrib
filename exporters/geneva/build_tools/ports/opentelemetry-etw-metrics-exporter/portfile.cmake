@@ -15,6 +15,7 @@ vcpkg_cmake_configure(
     OPTIONS
         -DBUILD_TESTING=OFF
         -DBUILD_EXAMPLE=OFF
+        -DMAIN_PROJECT=ON
 )
 
 vcpkg_cmake_install()
