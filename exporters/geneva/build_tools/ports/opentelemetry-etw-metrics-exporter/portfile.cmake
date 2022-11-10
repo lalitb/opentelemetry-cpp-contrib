@@ -16,7 +16,6 @@ vcpkg_cmake_configure(
         -DBUILD_TESTING=OFF
         -DBUILD_EXAMPLE=OFF-G
         -DMAIN_PROJECT=ON
-        -G "Unix Makefiles"
 )
 
 vcpkg_cmake_install()

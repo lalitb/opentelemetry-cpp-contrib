@@ -16,7 +16,7 @@ if(NOT WIN32)
 endif()
 add_definitions(-DHAVE_CONSOLE_LOG)
 if(MAIN_PROJECT)
-  find_package(opentelemetry-cpp REQUIRED)
+  find_package(opentelemetry-cpp-1 REQUIRED)
 endif()
 
 include_directories(include)
