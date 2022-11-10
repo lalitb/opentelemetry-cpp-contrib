@@ -7,7 +7,7 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lalitb/opentelemetry-cpp-contrib
-    HEAD_REF geneva-test-vcpkg-geneva-exporter
+    HEAD_REF test-vcpkg-geneva-exporter
 )
 
 vcpkg_cmake_configure(
