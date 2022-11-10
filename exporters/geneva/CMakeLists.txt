@@ -10,7 +10,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   project(opentelemetry-geneva-metrics)
   set(MAIN_PROJECT ON)
 endif()
-
+dsdsdsds
 if(NOT WIN32)
   find_package(CURL REQUIRED)
 endif()
