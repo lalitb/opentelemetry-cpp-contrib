@@ -17,7 +17,7 @@ endif()
 add_definitions(-DHAVE_CONSOLE_LOG)
 if(MAIN_PROJECT)
   find_package(opentelemetry-cpp REQUIRED)
-  message(WARNING "test")
+  message(FATAL_ERROR "test")
 endif()
 
 include_directories(include)
