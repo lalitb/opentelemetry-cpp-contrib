@@ -14,8 +14,9 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}/exporters/geneva/"
     OPTIONS
         -DBUILD_TESTING=OFF
-        -DBUILD_EXAMPLE=OFF
+        -DBUILD_EXAMPLE=OFF-G
         -DMAIN_PROJECT=ON
+        -G "Unix Makefiles"
 )
 
 vcpkg_cmake_install()
