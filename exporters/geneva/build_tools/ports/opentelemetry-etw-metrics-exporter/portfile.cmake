@@ -7,11 +7,11 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lalitb/opentelemetry-cpp-contrib
-    HEAD_REF geneva-windows
+    HEAD_REF geneva-test-vcpkg-geneva-exporter
 )
 
 vcpkg_cmake_configure(
-    SOURCE_PATH "${SOURCE_PATH}/exporters/geneva/"
+    SOURCE_PATH "${SOURCE_PATH}/exporters/geneva/build_tools/"
     OPTIONS
         -DBUILD_TESTING=OFF
         -DBUILD_EXAMPLE=OFF
