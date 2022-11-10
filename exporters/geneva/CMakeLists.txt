@@ -17,7 +17,7 @@ endif()
 add_definitions(-DHAVE_CONSOLE_LOG)
 if(MAIN_PROJECT)
   find_package(opentelemetry-cpp REQUIRED)
-  message(FATAL_ERROR "${OPENTELEMETRY_CPP_INCLUDE_DIRS} ${OPENTELEMETRY_CPP_LIBRARIES}")
+  message( "${OPENTELEMETRY_CPP_INCLUDE_DIRS} ${OPENTELEMETRY_CPP_LIBRARIES}")
 endif()
 
 include_directories(include)
@@ -32,14 +32,15 @@ else()
   add_library(opentelemetry_exporter_geneva_metrics
               src/exporter.cc src/unix_domain_socket_data_transport.cc)
 endif()
-
+message("HERE")
 target_include_directories(opentelemetry_exporter_geneva_metrics
                            PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
+message("HEERE-2")
 target_link_libraries(opentelemetry_exporter_geneva_metrics
                       PUBLIC ${OPENTELEMETRY_CPP_LIBRARIES})
 set_target_properties(opentelemetry_exporter_geneva_metrics
                       PROPERTIES EXPORT_NAME metrics)
-
+message("HERE-3")
 if(BUILD_TESTING)
   if(EXISTS ${CMAKE_BINARY_DIR}/lib/libgtest.a)
     # Prefer GTest from build tree. GTest is not always working with
