@@ -32,4 +32,9 @@
     void ProcessMetricsFactory::GetProcessContextSwitches(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/)
     {}
 
+
+    void ProcessMetricsFactory::GetProcessMemoryMallinfo(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/)
+    {
+    }
+
 #endif

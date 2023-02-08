@@ -17,6 +17,8 @@ public:
   static void create_process_threads_observable_gauge();
   static void create_process_open_files_observable_gauge();
   static void create_process_context_switches_observable_gauge();
+  static void start_stress_test();
+  static void create_process_memory_mallinfo_observable_gauge();
 private:
   static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> cpu_time_obserable_counter_;
   static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> cpu_utilization_obserable_gauge_;
@@ -27,4 +29,5 @@ private:
   static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> threads_obserable_gauge_;
   static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> open_files_obserable_gauge_;
   static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> context_switches_obserable_gauge_;
+  static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> memory_mallinfo_obserable_gauge_;
 };

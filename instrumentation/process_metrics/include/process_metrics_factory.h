@@ -27,4 +27,6 @@ public:
 
     static void GetProcessContextSwitches(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/);
 
+    static void GetProcessMemoryMallinfo(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/);
+
 };

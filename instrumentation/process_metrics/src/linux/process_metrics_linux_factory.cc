@@ -23,6 +23,7 @@
 #include <sys/syscall.h>
 #include <linux/perf_event.h>
 #include <thread>
+#include <malloc.h>
 
 using namespace opentelemetry;
 
@@ -102,7 +103,8 @@ namespace {
     {
         static ProcessCpuTime cputime;
         double cpu_utilization = cputime.CpuUtilization();
-        nostd::get<nostd::shared_ptr<metrics::ObserverResultT<double>>>(observer_result)->Observe(cpu_utilization);
+        if (cpu_utilization > 0)
+            nostd::get<nostd::shared_ptr<metrics::ObserverResultT<double>>>(observer_result)->Observe(cpu_utilization);
     }
 
     void ProcessMetricsFactory::GetProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/)
@@ -187,6 +189,13 @@ namespace {
     }
 
 
+    void ProcessMetricsFactory::GetProcessMemoryMallinfo(opentelemetry::metrics::ObserverResult observer_result, void * /*state*/)
+    {
+        struct mallinfo m = mallinfo();
+        long used = m.uordblks  + m.hblkhd ;
+        std::cout << "Used memory:" << used << "\n";
+        opentelemetry::nostd::get<nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<long>>>(observer_result)->Observe(used, {{"type", "memory_usage_mallinfo"}});
+    }
 
 
 #endif

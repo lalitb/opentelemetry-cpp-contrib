@@ -1,4 +1,4 @@
-#  include "opentelemetry/exporters/ostream/metric_exporter.h"
+#include "opentelemetry/exporters/prometheus/exporter.h"
 #  include "opentelemetry/metrics/provider.h"
 #  include "opentelemetry/sdk/metrics/aggregation/default_aggregation.h"
 #  include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader.h"
@@ -10,10 +10,10 @@
 #  include <memory>
 #  include <thread>
 
-namespace metric_sdk      = opentelemetry::sdk::metrics;
+namespace metrics_sdk      = opentelemetry::sdk::metrics;
 namespace nostd           = opentelemetry::nostd;
 namespace common          = opentelemetry::common;
-namespace exportermetrics = opentelemetry::exporter::metrics;
+namespace metrics_exporter = opentelemetry::exporter::metrics;
 namespace metrics_api     = opentelemetry::metrics;
 
 namespace
@@ -21,21 +21,17 @@ namespace
 
 void initMetrics()
 {
-    std::cout << "\n LALIT->Init metrics\n";
-  std::unique_ptr<metric_sdk::PushMetricExporter> exporter{new exportermetrics::OStreamMetricExporter};
-
+  metrics_exporter::PrometheusExporterOptions opts;
   std::string version{"1.2.0"};
   std::string schema{"https://opentelemetry.io/schemas/1.2.0"};
 
-  // Initialize and set the global MeterProvider
-  metric_sdk::PeriodicExportingMetricReaderOptions options;
-  options.export_interval_millis = std::chrono::milliseconds(1000);
-  options.export_timeout_millis  = std::chrono::milliseconds(500);
-  std::unique_ptr<metric_sdk::MetricReader> reader{
-      new metric_sdk::PeriodicExportingMetricReader(std::move(exporter), options)};
-  auto provider = std::shared_ptr<metrics_api::MeterProvider>(new metric_sdk::MeterProvider());
-  auto p        = std::static_pointer_cast<metric_sdk::MeterProvider>(provider);
-  p->AddMetricReader(std::move(reader));
+  std::shared_ptr<metrics_sdk::MetricReader> prometheus_exporter(
+      new metrics_exporter::PrometheusExporter(opts));
+  
+
+  auto provider = std::shared_ptr<metrics_api::MeterProvider>(new metrics_sdk::MeterProvider());
+  auto p        = std::static_pointer_cast<metrics_sdk::MeterProvider>(provider);
+  p->AddMetricReader(std::move(prometheus_exporter));
 
 #if 0
   //process.cpu.time view
@@ -51,7 +47,6 @@ void initMetrics()
 
 #endif
   metrics_api::Provider::SetMeterProvider(provider);
-      std::cout << "\n LALIT->Init metrics done\n";
 
 }
 }  // namespace
@@ -63,10 +58,12 @@ int main(int argc, char **argv)
   if (args.size() == 0) {
       std::cout <<  "Options -- \n" ;
       std::cout <<  "\t --process.cpu.time --process.cpu.utilization --process.memory.usage --process.memory.virtual\n" ;
-      std::cout <<  "\t --process.disk.io --process.network.io --process.threads --process.open.files --process.context.switches\n";
+      std::cout <<  "\t --process.disk.io --process.network.io --process.threads --process.open.files --process.context.switches --stress.test\n";
+      std::cout << "\n";
       exit(1); 
   }
-  initMetrics();  
+  initMetrics();
+
   for (auto &arg: args) {
     if (arg == "--process.cpu.time") {
       TestLib::create_process_cpu_time_observable_counter();
@@ -103,11 +100,19 @@ int main(int argc, char **argv)
     {
       TestLib::create_process_context_switches_observable_gauge();
     }
+    else if (arg == "--process.memory.usage.mallinfo")
+    {
+      TestLib::create_process_memory_mallinfo_observable_gauge();
+    }
+    else if (arg == "--stress.test")
+    {
+      TestLib::start_stress_test();
+    }
     else {
       std::cout << " Invalid command, exiting..";
       std::cout <<  "\tOptions -- \n" ;
-      std::cout <<  "\t\t --process.cpu.time --process.cpu.utilization --process.memory.usage --process.memory.virtual" ;
-      std::cout <<  "\t\t --process.disk.io --process.network.io --process.threads --process.open.files --process.context.switches";
+      std::cout <<  "\t\t --process.cpu.time --process.cpu.utilization --process.memory.usage --process.memory.virtual\n" ;
+      std::cout <<  "\t\t --process.disk.io --process.network.io --process.threads --process.open.files --process.context.switches --stress.test\n";
       exit(1);
     }
   }

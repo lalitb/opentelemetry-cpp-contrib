@@ -24,6 +24,7 @@ class ProcessCpuTime
         static long clock_ticks_per_sec_;
         struct tms start_time_;
         mutable struct tms last_cpu_time_;
+        mutable std::clock_t last_cpu_clock_;
         const unsigned int number_of_cpus_;
         std::chrono::time_point<std::chrono::high_resolution_clock> last_clock_time_;
 };

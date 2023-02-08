@@ -5,6 +5,7 @@ project(opentelemetry-process-metrics)
 add_definitions(-DHAVE_CONSOLE_LOG)
 
 find_package(opentelemetry-cpp REQUIRED)
+find_package(prometheus-cpp CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
 option(WITH_EXAMPLE "Whether to build example code" ON)
@@ -22,5 +23,5 @@ endif()
 if (WITH_EXAMPLE)
     add_executable(metrics_example example/metrics_example.cc)
     target_link_libraries(metrics_example opentelemetry_process_metrics opentelemetry-cpp::metrics
-    opentelemetry-cpp::resources opentelemetry_exporter_ostream_metrics)
+    opentelemetry-cpp::resources opentelemetry_exporter_ostream_metrics opentelemetry_exporter_prometheus  prometheus-cpp::pull prometheus-cpp::core)
 endif()
