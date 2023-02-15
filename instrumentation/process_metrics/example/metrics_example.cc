@@ -1,9 +1,12 @@
-#include "opentelemetry/exporters/prometheus/exporter.h"
-#  include "opentelemetry/metrics/provider.h"
-#  include "opentelemetry/sdk/metrics/aggregation/default_aggregation.h"
-#  include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader.h"
-#  include "opentelemetry/sdk/metrics/meter.h"
-#  include "opentelemetry/sdk/metrics/meter_provider.h"
+#include "opentelemetry/exporters/geneva/metrics/exporter.h"
+#include "opentelemetry/metrics/provider.h"
+#include "opentelemetry/sdk/metrics/aggregation/default_aggregation.h"
+#include "opentelemetry/sdk/metrics/aggregation/histogram_aggregation.h"
+#include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader.h"
+#include "opentelemetry/sdk/metrics/meter.h"
+#include "opentelemetry/sdk/metrics/meter_provider.h"
+#include <memory>
+#include <thread>
 
 #include "../include/test_lib.h"
 
@@ -13,25 +16,42 @@
 namespace metrics_sdk      = opentelemetry::sdk::metrics;
 namespace nostd           = opentelemetry::nostd;
 namespace common          = opentelemetry::common;
-namespace metrics_exporter = opentelemetry::exporter::metrics;
+namespace geneva_exporter = opentelemetry::exporter::geneva::metrics;
 namespace metrics_api     = opentelemetry::metrics;
 
 namespace
 {
 
-void initMetrics()
+const std::string kUnixDomainPath = "/home/labhas/mdm/sock/mdm_ifx.socket";
+const std::string kNamespaceName = "test_ns";
+
+void initMetrics(const std::string &name ="test_example", const std::string &account_name = "IFxSDKCI")
 {
-  metrics_exporter::PrometheusExporterOptions opts;
+
+  std::string conn_string =
+      "Account=" + account_name + ";Namespace=" + kNamespaceName;
+#ifndef _WIN32
+  conn_string = "Endpoint=unix://" + kUnixDomainPath + ";" + conn_string;
+#endif
+
+  geneva_exporter::ExporterOptions options{conn_string};
+  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter{
+      new geneva_exporter::Exporter(options)};
+
   std::string version{"1.2.0"};
   std::string schema{"https://opentelemetry.io/schemas/1.2.0"};
 
-  std::shared_ptr<metrics_sdk::MetricReader> prometheus_exporter(
-      new metrics_exporter::PrometheusExporter(opts));
-  
 
-  auto provider = std::shared_ptr<metrics_api::MeterProvider>(new metrics_sdk::MeterProvider());
-  auto p        = std::static_pointer_cast<metrics_sdk::MeterProvider>(provider);
-  p->AddMetricReader(std::move(prometheus_exporter));
+metrics_sdk::PeriodicExportingMetricReaderOptions reader_options;
+  reader_options.export_interval_millis = std::chrono::milliseconds(60 *1000);
+  reader_options.export_timeout_millis = std::chrono::milliseconds(500);
+  std::unique_ptr<metrics_sdk::MetricReader> reader{
+      new metrics_sdk::PeriodicExportingMetricReader(std::move(exporter),
+                                                    reader_options)};
+  auto provider = std::shared_ptr<metrics_api::MeterProvider>(
+      new metrics_sdk::MeterProvider());
+  auto p = std::static_pointer_cast<metrics_sdk::MeterProvider>(provider);
+  p->AddMetricReader(std::move(reader));
 
 #if 0
   //process.cpu.time view
