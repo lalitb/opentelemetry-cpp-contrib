@@ -121,12 +121,16 @@ void TestLib::start_stress_test()
     measurementThreads.push_back(std::thread( [&instrument, i /*, &measurements*/]() {
       while (true) {
         for (int j = 0 ; j < TOTAL_MEASUREMENTS ; j++ ){
-          instrument->Add(1.0);
-          if (j % 1000 == 0){
-            std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-          }
+          size_t rand1 = rand() % 10;
+          size_t rand2 = rand() % 10;
+          size_t rand3 = rand() % 10;
+
+          instrument->Add(1.0, {{"dim1", rand1}, {"dim2", rand2}, {"dim3", rand3}});
+         // if (j % 1000 == 0){
+         //   std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+         // }
         }
-        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+       // std::this_thread::sleep_for(std::chrono::nanoseconds(100));
       }
     }));
   }

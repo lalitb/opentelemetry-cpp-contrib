@@ -25,7 +25,7 @@ namespace
 const std::string kUnixDomainPath = "/home/labhas/mdm/sock/mdm_ifx.socket";
 const std::string kNamespaceName = "test_ns";
 
-void initMetrics(const std::string &name ="test_example", const std::string &account_name = "IFxSDKCI")
+void initMetrics(const std::string &name ="metrics_stress_14_2", const std::string &account_name = "IFxSDKCI")
 {
 
   std::string conn_string =
