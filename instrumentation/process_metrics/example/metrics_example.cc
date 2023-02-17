@@ -1,4 +1,4 @@
-#include "opentelemetry/exporters/geneva/metrics/exporter.h"
+#include "opentelemetry/exporters/ostream/metric_exporter.h"
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/sdk/metrics/aggregation/default_aggregation.h"
 #include "opentelemetry/sdk/metrics/aggregation/histogram_aggregation.h"
@@ -16,7 +16,7 @@
 namespace metrics_sdk      = opentelemetry::sdk::metrics;
 namespace nostd           = opentelemetry::nostd;
 namespace common          = opentelemetry::common;
-namespace geneva_exporter = opentelemetry::exporter::geneva::metrics;
+namespace ostream_exporter = opentelemetry::exporter::metrics;
 namespace metrics_api     = opentelemetry::metrics;
 
 namespace
@@ -28,29 +28,20 @@ const std::string kNamespaceName = "test_ns";
 void initMetrics(const std::string &name ="test_example", const std::string &account_name = "IFxSDKCI")
 {
 
-  std::string conn_string =
-      "Account=" + account_name + ";Namespace=" + kNamespaceName;
-#ifndef _WIN32
-  conn_string = "Endpoint=unix://" + kUnixDomainPath + ";" + conn_string;
-#endif
-
-  geneva_exporter::ExporterOptions options{conn_string};
   std::unique_ptr<metrics_sdk::PushMetricExporter> exporter{
-      new geneva_exporter::Exporter(options)};
+      new ostream_exporter::OStreamMetricExporter};
 
   std::string version{"1.2.0"};
   std::string schema{"https://opentelemetry.io/schemas/1.2.0"};
 
-
-metrics_sdk::PeriodicExportingMetricReaderOptions reader_options;
-  reader_options.export_interval_millis = std::chrono::milliseconds(60 *1000);
-  reader_options.export_timeout_millis = std::chrono::milliseconds(500);
+  // Initialize and set the global MeterProvider
+  metrics_sdk::PeriodicExportingMetricReaderOptions options;
+  options.export_interval_millis = std::chrono::milliseconds(3000 * 1000);
+  options.export_timeout_millis  = std::chrono::milliseconds(500);
   std::unique_ptr<metrics_sdk::MetricReader> reader{
-      new metrics_sdk::PeriodicExportingMetricReader(std::move(exporter),
-                                                    reader_options)};
-  auto provider = std::shared_ptr<metrics_api::MeterProvider>(
-      new metrics_sdk::MeterProvider());
-  auto p = std::static_pointer_cast<metrics_sdk::MeterProvider>(provider);
+      new metrics_sdk::PeriodicExportingMetricReader(std::move(exporter), options)};
+  auto provider = std::shared_ptr<metrics_api::MeterProvider>(new metrics_sdk::MeterProvider());
+  auto p        = std::static_pointer_cast<metrics_sdk::MeterProvider>(provider);
   p->AddMetricReader(std::move(reader));
 
 #if 0

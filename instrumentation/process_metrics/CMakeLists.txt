@@ -22,5 +22,5 @@ endif()
 if (WITH_EXAMPLE)
     add_executable(metrics_example example/metrics_example.cc)
     target_link_libraries(metrics_example opentelemetry_process_metrics opentelemetry-cpp::metrics
-    opentelemetry-cpp::resources opentelemetry_exporter_geneva_metrics )
+    opentelemetry-cpp::resources  opentelemetry_exporter_ostream_metrics )
 endif()
