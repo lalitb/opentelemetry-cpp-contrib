@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout otel contrib prometheus
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: "otel_cpp_contrib"
       - name: Mount Bazel Cache
@@ -38,7 +38,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: checkout otel contrib prometheus
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: "otel_cpp_contrib"
       - name: Mount Bazel Cache
@@ -58,11 +58,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: checkout otel contrib prometheus
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: "otel_cpp_contrib"
       - name: checkout otel cpp
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           repository: "open-telemetry/opentelemetry-cpp"
           ref: "v1.15.0"
@@ -96,11 +96,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout otel contrib prometheus
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: "otel_cpp_contrib"
       - name: checkout otel cpp
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           repository: "open-telemetry/opentelemetry-cpp"
           ref: "v1.15.0"
