@@ -1,14 +1,19 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-param([switch]$Breakdown)
+param([switch]$Breakdown, [switch]$GoogleBenchmark)
 
 $ErrorActionPreference = 'Stop'
+if ($Breakdown -and $GoogleBenchmark) { throw 'Choose either -Breakdown or -GoogleBenchmark.' }
 $output = Join-Path $PSScriptRoot 'results'
 $executable = 'geneva_etw_benchmark.exe'
 if ($Breakdown) {
     $output = Join-Path $output 'breakdown'
     $executable = 'geneva_etw_breakdown.exe'
+}
+if ($GoogleBenchmark) {
+    $output = Join-Path $output 'google-benchmark'
+    $executable = 'geneva_etw_google_benchmark.exe'
 }
 New-Item -ItemType Directory -Force $output | Out-Null
 $session = "OtelGenevaBench-$PID"
@@ -19,9 +24,23 @@ try {
         Tee-Object (Join-Path $output 'session.txt')
     if ($LASTEXITCODE -ne 0) { throw 'ETW session creation failed; run this script elevated.' }
     try {
-        $timings = & (Join-Path $PSScriptRoot "build\Release\$executable") 2>&1
-        $benchmarkExit = $LASTEXITCODE
-        $timings | Set-Content -Encoding UTF8 (Join-Path $output 'timings.txt')
+        $processOptions = @{
+            FilePath = Join-Path $PSScriptRoot "build\Release\$executable"
+            NoNewWindow = $true
+            Wait = $true
+            PassThru = $true
+            RedirectStandardOutput = Join-Path $output 'timings.txt'
+            RedirectStandardError = Join-Path $output 'diagnostics.txt'
+        }
+        if ($GoogleBenchmark) {
+            $json = Join-Path $output 'timings.json'
+            $processOptions.ArgumentList = @(
+                '--benchmark_color=false', '--benchmark_out_format=json', "--benchmark_out=`"$json`""
+            )
+        }
+        $process = Start-Process @processOptions
+        $benchmarkExit = $process.ExitCode
+        $timings = Get-Content (Join-Path $output 'timings.txt')
         $timings
     } finally {
         & logman stop $session -ets | Tee-Object -Append (Join-Path $output 'session.txt')

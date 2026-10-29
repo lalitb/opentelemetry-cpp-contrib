@@ -39,6 +39,23 @@ if(GENEVA_ETW_BREAKDOWN)
   list(APPEND benchmark_targets geneva_etw_breakdown)
 endif()
 
+option(GENEVA_ETW_GOOGLE_BENCHMARK "Build the Google Benchmark span lifecycle case" OFF)
+if(GENEVA_ETW_GOOGLE_BENCHMARK)
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_Declare(
+    google_benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG v1.9.4
+    GIT_SHALLOW TRUE)
+  FetchContent_MakeAvailable(google_benchmark)
+  add_executable(
+    geneva_etw_google_benchmark google_benchmark.cc
+    "${OPENTELEMETRY_CPP_ROOT}/sdk/src/common/empty_attributes.cc")
+  target_link_libraries(geneva_etw_google_benchmark PRIVATE benchmark::benchmark)
+  list(APPEND benchmark_targets geneva_etw_google_benchmark)
+endif()
+
 foreach(target IN LISTS benchmark_targets)
   target_compile_features(${target} PRIVATE cxx_std_17)
   target_compile_definitions(${target} PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)

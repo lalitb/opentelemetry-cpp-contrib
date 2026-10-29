@@ -15,6 +15,12 @@ Optional Span::End breakdown (instruments build-directory header copies only):
   cmake --build build --config Release --target geneva_etw_breakdown
   powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Breakdown
 
+Optional Google Benchmark (one span lifecycle case, no stage probes):
+
+  cmake -S . -B build -DGENEVA_ETW_GOOGLE_BENCHMARK=ON
+  cmake --build build --config Release --target geneva_etw_google_benchmark
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -GoogleBenchmark
+
 Results
 --------
 Single thread, three attributes, 64-byte log body. Median batch-average time
@@ -46,3 +52,11 @@ Largest median: TLD encoding; ETW write is close (0.64-1.81 us across batches).
 Empty probe sequence: 0.225 us/span, not subtracted. Stage times include their
 allocations, not allocator-only cost. No context attach/detach is exercised.
 ETW capture: 71,000 expected events captured, zero lost. Raw data: results\breakdown\.
+
+Google Benchmark v1.9.4: full span lifecycle
+------------------------------------------
+StartSpan + three attributes + End/ETW write + destruction: median 9,024 ns/span.
+Wall-clock time (UseRealTime), seven repetitions of 10,000 spans, with 1,000
+untimed warm-up spans per repetition. Provider/source-attribute setup excluded.
+ETW capture: 77,000 expected events captured, zero lost.
+Raw output and JSON: results\google-benchmark\.
