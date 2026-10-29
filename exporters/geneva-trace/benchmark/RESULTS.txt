@@ -9,6 +9,12 @@ Run in an elevated PowerShell to enable ETW and verify captured events:
 
   powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1
 
+Optional Span::End breakdown (instruments build-directory header copies only):
+
+  cmake -S . -B build -DGENEVA_ETW_BREAKDOWN=ON
+  cmake --build build --config Release --target geneva_etw_breakdown
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Breakdown
+
 Results
 --------
 Single thread, three attributes, 64-byte log body. Median batch-average time
@@ -23,3 +29,20 @@ Span start + attributes + end    9.27 us
 
 ETW capture: 284,000 expected events captured, zero lost.
 Raw timings and capture verification are written to results\.
+
+Span::End stage breakdown (same workload, separate instrumented run)
+------------------------------------------------------------------
+Stage                                  Time/span
+TLD metadata + payload encoding         1.71 us
+ETW write                               1.60 us
+Two timestamps + field assignment       1.26 us
+Attribute copying                      0.83 us
+Cleanup + other bookkeeping             0.68 us
+IDs + envelope fields                   0.59 us
+Duration/kind/status fields             0.45 us
+Instrumented total                      7.13 us
+
+Largest median: TLD encoding; ETW write is close (0.64-1.81 us across batches).
+Empty probe sequence: 0.225 us/span, not subtracted. Stage times include their
+allocations, not allocator-only cost. No context attach/detach is exercised.
+ETW capture: 71,000 expected events captured, zero lost. Raw data: results\breakdown\.

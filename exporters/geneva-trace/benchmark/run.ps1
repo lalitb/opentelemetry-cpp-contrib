@@ -1,8 +1,15 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+param([switch]$Breakdown)
+
 $ErrorActionPreference = 'Stop'
 $output = Join-Path $PSScriptRoot 'results'
+$executable = 'geneva_etw_benchmark.exe'
+if ($Breakdown) {
+    $output = Join-Path $output 'breakdown'
+    $executable = 'geneva_etw_breakdown.exe'
+}
 New-Item -ItemType Directory -Force $output | Out-Null
 $session = "OtelGenevaBench-$PID"
 $etl = Join-Path $output 'events.etl'
@@ -12,7 +19,7 @@ try {
         Tee-Object (Join-Path $output 'session.txt')
     if ($LASTEXITCODE -ne 0) { throw 'ETW session creation failed; run this script elevated.' }
     try {
-        $timings = & (Join-Path $PSScriptRoot 'build\Release\geneva_etw_benchmark.exe') 2>&1
+        $timings = & (Join-Path $PSScriptRoot "build\Release\$executable") 2>&1
         $benchmarkExit = $LASTEXITCODE
         $timings | Set-Content -Encoding UTF8 (Join-Path $output 'timings.txt')
         $timings
