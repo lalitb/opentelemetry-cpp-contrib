@@ -68,7 +68,17 @@ int main()
       {"string_key", otel::nostd::string_view("benchmark-value")},
       {"integer_key", int64_t{42}},
       {"bool_key", true}};
-  std::vector<double> log_samples, span_samples;
+  auto make_record = [&] {
+    auto record = logger->CreateLogRecord();
+    record->SetBody(otel::nostd::string_view(body));
+    record->SetSeverity(otel::logs::Severity::kInfo);
+    for (const auto &attribute : attributes)
+    {
+      record->SetAttribute(attribute.first, attribute.second);
+    }
+    return record;
+  };
+  std::vector<double> log_samples, span_samples, log_full_samples, span_full_samples;
   for (size_t repeat = 0; repeat <= kRepeats; ++repeat)
   {
     const size_t count = repeat == 0 ? kWarmup : kIterations;
@@ -76,30 +86,32 @@ int main()
     std::vector<otel::nostd::shared_ptr<otel::trace::Span>> spans;
     records.reserve(count);
     spans.reserve(count);
-    // Record/span creation and attribute assignment are outside the measured send calls.
+    // Prepare distinct records/spans outside the sender-only timers.
     for (size_t i = 0; i < count; ++i)
     {
-      auto record = logger->CreateLogRecord();
-      record->SetBody(otel::nostd::string_view(body));
-      record->SetSeverity(otel::logs::Severity::kInfo);
-      for (const auto &attribute : attributes)
-      {
-        record->SetAttribute(attribute.first, attribute.second);
-      }
-      records.emplace_back(std::move(record));
+      records.emplace_back(make_record());
       spans.emplace_back(tracer->StartSpan("benchmark-span", attributes));
     }
     const double log_ns =
         Time(count, [&](size_t i) { logger->EmitLogRecord(std::move(records[i])); });
-    const double span_ns = Time(count, [&](size_t i) { spans[i]->End(); });
+    const double span_ns      = Time(count, [&](size_t i) { spans[i]->End(); });
+    const double log_full_ns  = Time(count, [&](size_t) { logger->EmitLogRecord(make_record()); });
+    const double span_full_ns = Time(count, [&](size_t) {
+      auto span = tracer->StartSpan("benchmark-span", attributes);
+      span->End();
+    });
     if (repeat != 0)
     {
       log_samples.push_back(log_ns);
       span_samples.push_back(span_ns);
+      log_full_samples.push_back(log_full_ns);
+      span_full_samples.push_back(span_full_ns);
     }
   }
   Report("log_emit_3attrs_64B", log_samples);
+  Report("log_create_emit_3attrs_64B", log_full_samples);
   Report("span_end_3attrs", span_samples);
-  std::cout << "Expected ETW events: " << 2 * (kWarmup + kRepeats * kIterations) << '\n';
+  Report("span_start_end_3attrs", span_full_samples);
+  std::cout << "Expected ETW events: " << 4 * (kWarmup + kRepeats * kIterations) << '\n';
   probe.close(handle);
 }
