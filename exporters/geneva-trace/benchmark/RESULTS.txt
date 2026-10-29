@@ -1,94 +1,25 @@
-Geneva ETW sender benchmark
-===========================
+Run (Windows, MSVC, CMake)
+--------------------------
+Check out opentelemetry-cpp v1.30.0 separately. From this benchmark directory:
 
-Final measured run
-------------------
-Operation                   Median       Min          Max          Operations/s
-Log emit only               6.398 us     5.495 us     7.096 us     156,307
-Log create + populate + emit 6.980 us     6.025 us     7.187 us     143,275
-Span end only               7.244 us     6.625 us     7.648 us     138,046
-Span start + attrs + end     9.267 us     8.402 us     9.520 us     107,905
-
-These are medians/minima/maxima of seven batch-average measurements, NOT
-individual-call latency percentiles. Operations/s is the reciprocal of the
-median batch-average time; it is not a multithreaded saturation measurement.
-
-Original sender-only run, preserved for reference: 6.275 us/log emit and
-6.570 us/span end. The table above reruns both original cases alongside the new
-full-lifecycle cases. Shared-machine/cache differences mean these measurements
-must not be subtracted to claim an isolated allocation or attribute-setting cost.
-
-Workload and timed boundary
----------------------------
-One sender thread, 10,000 calls per sample, seven samples per operation, and
-1,000 warm-up calls per operation. Each record/span has three attributes:
-a string ("benchmark-value"), an int64 (42), and a bool (true).
-Logs additionally have a 64-byte ASCII body and INFO severity.
-
-The original sender-only cases prepare distinct records/spans before their
-timers, measuring just EmitLogRecord (which consumes/destroys the record) or End.
-Record/span creation and attribute assignment are excluded from those cases;
-span destruction is also outside the sender-only timer.
-
-The new full-lifecycle log case times CreateLogRecord, SetBody, SetSeverity,
-all three SetAttribute calls, and EmitLogRecord, including record destruction.
-The new full-lifecycle span case times StartSpan with all three attributes,
-ID generation, End, and span destruction.
-Exporter field preparation, timestamp formatting, serialization, and the actual
-ETW write are included in all four cases.
-Provider setup and construction of reusable input body/attribute values are
-outside all timers. Assigning/copying them into each record/span is timed in the
-full-lifecycle cases. No application work is simulated.
-Trace/span ID fields are enabled. Logs have no active span, so their IDs are zero.
-TLD encoding is used; ENABLE_ENV_PROPERTIES is not defined.
-
-ETW capture and verification
-----------------------------
-A standard elevated ETW session enables the benchmark's provider at level 5
-with all keywords. It writes a sequential ETL file using 64-KiB buffers
-(128 minimum, 256 maximum). The SDK writes to ETW buffers during the timed calls;
-OS flushing runs asynchronously and may still affect observed sender performance.
-No Geneva agent, network export, receiver decoding, or ingestion is timed.
-
-Offline tracerpt verification: 142,000 Log events + 142,000 Span events = 284,000
-benchmark-provider events, exactly as expected; zero events lost.
-The additional two ETL events are ETW session metadata, not benchmark events.
-The run script stops its own session before decoding and validates provider
-event count and the loss counter.
-
-Environment and source
------------------------
-Windows 11 Enterprise 10.0.26300, AMD EPYC 7763 host, 16 logical processors
-exposed, approximately 64 GiB RAM. MSVC 19.51.36260, x64 Release (/O2), C++17,
-/W4 /WX for benchmark sources. This is a shared environment, not an isolated
-performance lab; the ranges show meaningful run-to-run scheduling variability.
-
-opentelemetry-cpp-contrib: eab86acead3d32fe8b8040ed4f6a5cf0c5811520
-opentelemetry-cpp: v1.30.0, c7b64ec660c1b6c65dff0932b3d1c3483bc6db64
-nlohmann/json: v3.12.0
-
-The Geneva headers select Geneva field names and include the ETW implementation.
-There is no separate runtime wrapper dispatch to benchmark. These results include
-the work needed to construct the Geneva-formatted events, not just EventWrite.
-
-Build and run
---------------
-Check out opentelemetry-cpp v1.30.0 separately. With CMake on PATH, from this
-benchmark directory (exporters\geneva-trace\benchmark):
   cmake -S . -B build -A x64 -DOPENTELEMETRY_CPP_ROOT=C:\path\to\opentelemetry-cpp
   cmake --build build --config Release --target geneva_etw_benchmark
 
-Then in an elevated PowerShell, from the same directory:
+Run in an elevated PowerShell to enable ETW and verify captured events:
+
   powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1
 
-Only main.cc and the upstream sdk\src\common\empty_attributes.cc helper are
-compiled by the final build. No SDK libraries are built or linked.
-The helper is required by this version's tracer virtual AddEvent methods.
-Windows system libraries are linked normally.
+Results
+--------
+Single thread, three attributes, 64-byte log body. Median batch-average time
+per record/span across seven batches of 10,000 calls after 1,000 warm-up calls.
+Windows 11, AMD EPYC 7763 (16 logical processors exposed), MSVC x64 Release.
 
-Source: main.cc; build configuration: CMakeLists.txt; ETW controller: run.ps1.
-Raw samples: results\timings.txt.
-Capture proof: results\summary.txt and results\validation.txt.
-Captured events: results\events.etl and decoded results\events.csv.
-Re-running run.ps1 overwrites those result files. Captures are generated locally,
-not checked into the repository.
+Operation                       Time
+Log emit only                   6.40 us
+Log create + populate + emit     6.98 us
+Span end only                   7.24 us
+Span start + attributes + end    9.27 us
+
+ETW capture: 284,000 expected events captured, zero lost.
+Raw timings and capture verification are written to results\.
